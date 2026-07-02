@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cityscout-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cityscout
+      POSTGRES_USER: cityscout
+      POSTGRES_PASSWORD: cityscout
+    ports:
+      - "5432:5432"
+    volumes:
+      - cityscout-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cityscout -d cityscout"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: cityscout-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cityscout
+      DB_USER: cityscout
+      DB_PASSWORD: cityscout
+    ports:
+      - "8080:8080"
+
+volumes:
+  cityscout-data:
